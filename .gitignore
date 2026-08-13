@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+venv/
+
+*.egg-info/
+dist/
+build/
+*.egg
+
+.env
+*.env
+!.env.example
+
+.vscode/
+
+*.log
+*.sqlite3
+db.sqlite3
+
+# Кэш и временные файлы
+.pytest_cache/
+.mypy_cache/
+.cache/
