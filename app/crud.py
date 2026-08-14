@@ -14,8 +14,8 @@ async def read_books(
     if genre:
         statement = statement.where(Book.genre == genre)
     statement = statement.offset(offset).limit(limit)
-    result = await session.exec(statement).all()
-    return result
+    result = await session.exec(statement)
+    return result.all()
 
 
 async def get_book(session: AsyncSession,
@@ -35,14 +35,13 @@ async def create_book(session: AsyncSession,
     return validated_book
 
 
-async def delete_book(session: AsyncSession,
-                      book_id: int):
-    book = session.get(Book, book_id)
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-    await session.delete(book)
-    await session.commit()
-    return True
+async def delete_book(session: AsyncSession, book_id: int):
+    db_book = await get_book(session, book_id)
+    if db_book:
+        await session.delete(db_book)
+        await session.commit()
+        return True
+    return False
 
 
 async def update_book(session: AsyncSession,
