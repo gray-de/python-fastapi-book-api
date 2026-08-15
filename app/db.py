@@ -1,12 +1,19 @@
 # app/database.py
-from sqlmodel import SQLModel, create_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "sqlite+aiosqlite:///./books.db"
+DATABASE_URL = "postgresql+asyncpg://admin:password_12345@localhost:5432/book_db"
 
-engine = create_async_engine(DATABASE_URL, echo=True, future=True)
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=False,
+    future=True,
+    pool_size=50,
+    max_overflow=100,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    connect_args={"statement_cache_size": 0}
+)
 
 async_session = async_sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
