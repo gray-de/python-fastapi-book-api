@@ -4,18 +4,32 @@ from app.models import BookRead, BookCreate, BookUpdate
 from typing import Annotated
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.db import get_session
+from redis.asyncio import Redis
+from app.redis import get_redis
+import json
 
 router = APIRouter(prefix="/books", tags=["books"])
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
+RedisDep = Annotated[Redis, Depends(get_redis)]
 
 
 @router.get("/", response_model=list[BookRead])
 async def read_books(session: SessionDep,
+                     redis: RedisDep,
                      limit: Annotated[int, Query(ge=1, le=1000)] = 100,
                      offset: Annotated[int, Query(ge=0)] = 0,
                      genre: Annotated[str | None, Query()] = None):
+    cache_key = f"books:list:{genre or 'all'}:{limit}:{offset}"
+    cached_data = await redis.get(cache_key)
+    if cached_data:
+        books_data = json.loads(cached_data)
+        return [BookRead(**book) for book in books_data]
+
     books = await crud.read_books(session, genre=genre,
                                   limit=limit, offset=offset)
+
+    books_data = [book.model_dump() for book in books]
+    await redis.set(cache_key, json.dumps(books_data), ex=60)
     return books
 
 
